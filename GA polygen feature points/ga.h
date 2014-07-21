@@ -8,14 +8,11 @@
 #include <direct.h>
 
 #define FLOAT2INT(fNum) ((fNum>0)?static_cast<int>(fNum+0.5):static_cast<int>(fNum-0.5))//浮点数转整数
-#define SAMPLE_HEIGHT_BIT_COUNT 10
-#define	SAMPLE_WIDTH_BIT_COUNT 10
+#define SAMPLE_HEIGHT_BIT_COUNT 10//二进制存 高
+#define	SAMPLE_WIDTH_BIT_COUNT 10//二进制存 宽
 #define SAMPLE_LENGTH 10 //支持最宽为1024或者最长为1024的图片 
-#define FEATURE_COUNTS 15
 #define POS_FEATURE_COUNTS 15//正向特征点数量
 #define NEG_FEATURE_COUNTS 5//反向特征点数量
-
-/*转为全局变量*/
 #define POINT_COUNT 30	//种群中个体个数；随机点个数
 #define BIG_POINT_COUNT 20   //达到点数
 #define MUTATION_PERCENT 0.2//变异率
@@ -41,7 +38,7 @@ int rightbound,leftbound,topbound,downbound;
 
 vector<Point> somepoints;// 随机选廓点 包括中间亮斑的轮廓点，工件最小包围框
 vector<Point> boundpoints;//轮廓点 包括中间亮斑的轮廓点，不包括工件最小包围框
-vector<Point> allboundpoints;//轮
+vector<Point> allboundpoints;
 
 char pos_bound_full_data_name[255];//局部最大圆图
 char pos_compare_data_name[255];//特征点图
@@ -96,23 +93,19 @@ void Trans_To_Binary_Array(int numberarray[],struct Point *p,int flag);
 
 int Binary_To_Decimal(int *binaryarray);
 
-void Mutation(Point pointsarray[],float *p_adapt_value, bool is_broaden_mutation,int choice) ;//变异操作 已经更新适配值
+void Mutation(Point pointsarray[],float *p_adapt_value, bool is_broaden_mutation,int choice);
 
-void Mutation_PointArray(Point *p,int choice);   //对该节点进行变异
+void Mutation_PointArray(Point *p,int choice);  
 
 void Trans_2_Foundation();
 
 void Trans_Back_Foundation(struct Point *p);
 
-void Trans_Foundation(struct Point *p);
-
 float Get_Nearest_Distance(struct Point p);
 
 void Trans_Boundpoints_2_Foundation();
 
-int Write_Points_2_Txt(char txtname[]);
-
-void Draw_Dot_Circle(float radius,int cicle_center_x,int cicle_center_y,int choice);
+void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice);
 
 void Float_qsort(float s[],int l,int r);
 
@@ -120,25 +113,25 @@ void Float_qsort(float s[],int l,int r);
 /*更新特征点图文件名*/
 void Str_process(char* originfile)
 {
-	strcpy(pos_inclean_name,originfile);
-	strcat(pos_inclean_name,pos_in_suffix);
-	strcat(pos_inclean_name,bmp);
-	strcpy(pos_compare_data_name,originfile);
-	strcat(pos_compare_data_name,pos_empty_suffix);
-	strcat(pos_compare_data_name,bmp);
-	strcpy(pos_bound_full_data_name,originfile);
-	strcat(pos_bound_full_data_name,pos_full_suffix);
-	strcat(pos_bound_full_data_name,bmp);
+	strcpy_s(pos_inclean_name,originfile);
+	strcat_s(pos_inclean_name,pos_in_suffix);
+	strcat_s(pos_inclean_name,bmp);
+	strcpy_s(pos_compare_data_name,originfile);
+	strcat_s(pos_compare_data_name,pos_empty_suffix);
+	strcat_s(pos_compare_data_name,bmp);
+	strcpy_s(pos_bound_full_data_name,originfile);
+	strcat_s(pos_bound_full_data_name,pos_full_suffix);
+	strcat_s(pos_bound_full_data_name,bmp);
 	
-	strcpy(neg_inclean_name,originfile);
-	strcat(neg_inclean_name,neg_in_suffix);
-	strcat(neg_inclean_name,bmp);
-	strcpy(neg_compare_data_name,originfile);
-	strcat(neg_compare_data_name,neg_empty_suffix);
-	strcat(neg_compare_data_name,bmp);
-	strcpy(neg_bound_full_data_name,originfile);
-	strcat(neg_bound_full_data_name,neg_full_suffix);
-	strcat(neg_bound_full_data_name,bmp);
+	strcpy_s(neg_inclean_name,originfile);
+	strcat_s(neg_inclean_name,neg_in_suffix);
+	strcat_s(neg_inclean_name,bmp);
+	strcpy_s(neg_compare_data_name,originfile);
+	strcat_s(neg_compare_data_name,neg_empty_suffix);
+	strcat_s(neg_compare_data_name,bmp);
+	strcpy_s(neg_bound_full_data_name,originfile);
+	strcat_s(neg_bound_full_data_name,neg_full_suffix);
+	strcat_s(neg_bound_full_data_name,bmp);
 }
 
 /*读图像*/
@@ -147,17 +140,20 @@ int Load_File(char filename[])
 	FILE *source;
    	int  x,y;
 	int fileSize,dwSize,current;
-		
+	errno_t err;
+
 	memset(raw_data,0,500000*sizeof(unsigned char));
 	memset(compare_data,0,500000*sizeof(unsigned char));
 	memset(bound_full_data,0,500000*sizeof(unsigned char));
 	memset(bound_empty_data,0,500000*sizeof(unsigned char));
 
-	if((source=fopen((char *)filename,"rb+"))==NULL)
-    	{
-        	printf("can't open the source file!\n");
-        	return 1;
-    	}
+    if(err=fopen_s(&source,(char *)filename,"rb+")!=0)
+	{
+        printf("can't open the source file!\n");
+        return 1;
+    }
+	else
+		printf("open the source file!\n");    
 	
 	/*读取bmp文件头和信息头存到数组里*/
 	fseek(source,0,SEEK_SET);
@@ -179,17 +175,14 @@ int Load_File(char filename[])
     else
 		scanline=width;
 
- 	for(x=0;x<height;x++)//读取bmp进数组		
-	{	
+ 	for(x=0;x<height;x++)//读取bmp进数组			
 		for(y=0;y<scanline;y++)
 		{
 			current=14+dwSize+1024+x*scanline+y;
 			fseek(source,current,0); 
 			raw_data[(height-1-x)*scanline+y]=fgetc(source);
 		}	
-	}
-	//memcpy(compare_data,raw_data,500000);
-	
+
 	fclose(source);
 	return 1;
 }	
@@ -197,75 +190,64 @@ int Load_File(char filename[])
 /*大津法二值化*/
 int Ostu_Process()
 {
-int x,y,i,j;
-   int thresh_value;
-   double piexlsum,greyscale;
-   float piexlcount[255]={0};
-   float piexlpercent[255]={0};
-   float w0,w1,u0tmp,u1tmp,u0,u1,u,deltaTmp,deltaMax;
-   
-   thresh_value=0;
-   greyscale=255;
-   deltaMax=0;
-   
+	int x,y,i,j;
+	int thresh_value;
+	float piexlsum,greyscale;
+	float piexlcount[255]={0};
+	float piexlpercent[255]={0};
+	float w0,w1,u0tmp,u1tmp,u0,u1,u,deltaTmp,deltaMax;	
+	
+	thresh_value=0;
+	greyscale=255;
+	deltaMax=0;
 	piexlsum=width*height;  
-   //memset(piexlcount,0,sizeof(piexlcount));
-   //memset(piexlpercent,0,sizeof(piexlpercent));
-
-   for (y=0;y<height;y++)  
-      for (x=0;x<width;x++)
-	  { 
-	    piexlcount[(int)raw_data[y*scanline+x]]++;//每级灰度的像素个数
-      }
+	
+	for (y=0;y<height;y++)  
+		for (x=0;x<width;x++) 
+			piexlcount[(int)raw_data[y*scanline+x]]++;//每级灰度的像素个数
+		
       
-   for(i=0;i<greyscale;i++)
-   {
-      piexlpercent[i]=(1.0*piexlcount[i])/(1.0*piexlsum);//每级灰度的像素占总像素数比率
-   }
-   
-   for(i=0;i<greyscale;i++)//阈值扫描
-   {
-     w0=w1=u0tmp=u1tmp=u0=u1=u=deltaTmp=0;
-     for(j=0;j<greyscale;j++)
-     {
-		if(j<i)
-		{
-			w0+=piexlpercent[j];//前景像素占总像素比率
-			u0tmp+=j*piexlpercent[j];//前景像素灰度平均值
-		}
-		else
-		{
-			w1+=piexlpercent[j];//背景像素占总像素比率
-			u1tmp+=j*piexlpercent[j];//背景像素灰度平均值
-		}
-     }
-     u0=u0tmp/w0;//前景像素灰度平均值
-     u1=u1tmp/w1;//背景像素灰度平均值
-     u=u0tmp+u1tmp;//所有像素灰度平均值
-     deltaTmp=w0*pow((u0-u),2)+w1*pow((u1-u),2);//前景背景差距=w0(u0-u)^2+w1(u1-u)^2
-     
-	 if(deltaTmp>deltaMax)//最大的deltaMax时，前景背景差异最大
-     {
-		deltaMax=deltaTmp;
-		thresh_value=i;
-     }
-   }  
+	for(i=0;i<greyscale;i++)
+		piexlpercent[i]=(1.0*piexlcount[i])/(1.0*piexlsum);//每级灰度的像素占总像素数比率
 
-   if(thresh_value!=0)//计算得到的阈值不为0
-   {
-	 for (y=0;y<height;y++)  	
-		for (x=0;x<width;x++)
-		{ 		
-			if(raw_data[y*scanline+x]<thresh_value)
-				raw_data[y*scanline+x]=255;
+	for(i=0;i<greyscale;i++)//阈值扫描
+	{
+		w0=w1=u0tmp=u1tmp=u0=u1=u=deltaTmp=0;
+		for(j=0;j<greyscale;j++)
+		{
+			if(j<i)
+			{
+				w0+=piexlpercent[j];//前景像素占总像素比率
+				u0tmp+=j*piexlpercent[j];//前景像素灰度平均值
+			}
 			else
-				raw_data[y*scanline+x]=0;
-        }
-   }
+			{
+				w1+=piexlpercent[j];//背景像素占总像素比率
+				u1tmp+=j*piexlpercent[j];//背景像素灰度平均值
+			}
+		}
+		u0=u0tmp/w0;//前景像素灰度平均值
+		u1=u1tmp/w1;//背景像素灰度平均值
+		u=u0tmp+u1tmp;//所有像素灰度平均值
+		deltaTmp=w0*pow((u0-u),2)+w1*pow((u1-u),2);//前景背景差距=w0(u0-u)^2+w1(u1-u)^2
 
+		if(deltaTmp>deltaMax)//最大的deltaMax时，前景背景差异最大
+		{
+			deltaMax=deltaTmp;
+			thresh_value=i;
+		}
+	} 
+	
+	if(thresh_value!=0)//计算得到的阈值不为0
+	{
+	 for (y=0;y<height;y++)  	
+		for (x=0;x<width;x++)		
+			raw_data[y*scanline+x]<thresh_value?raw_data[y*scanline+x]=255:raw_data[y*scanline+x]=0;	
+	}
+	
 	memcpy(compare_data,raw_data,500000);//复制
 	char filename[255]="binary_image.bmp";
-    Save_Image(filename,0);
+	Save_Image(filename,0);
 	return 1;
 }
 
@@ -344,21 +326,13 @@ void Draw_Bound_Pic()
 	memcpy(bound_full_data,raw_data,500000);//复制
 
 	for(x=topbound;x<downbound;x++)
-	{
 		bound_full_data[x*scanline+leftbound]=255;
-	}
 	for(x=topbound;x<downbound;x++)
-	{
 		bound_full_data[x*scanline+rightbound]=255;
-	}
 	for(y=leftbound;y<rightbound;y++)
-	{		
 		bound_full_data[topbound*scanline+y]=255;
-	}
 	for(y=leftbound;y<rightbound;y++)
-	{		
 		bound_full_data[downbound*scanline+y]=255;
-	}
 
 	Save_Image(filename,1);
 }
@@ -387,7 +361,6 @@ float Get_Nearest_Distance(struct Point p)
 	return value;
 }
 
-
 /*十进制转二进制*/
 void Trans_To_Binary_Array(int numberarray[],struct Point *p,int flag)//flag等于0的话取x，1为y
 {
@@ -400,10 +373,8 @@ void Trans_To_Binary_Array(int numberarray[],struct Point *p,int flag)//flag等于
 		sum=p->y;	
 
 	for(i=0;i<SAMPLE_LENGTH;i++)//初始化
-	{
 		numberarray[i]=0;
-	}
-
+	
 	i=SAMPLE_LENGTH-1;
 	while(sum!=0)
 	{
@@ -461,18 +432,6 @@ void Trans_Boundpoints_2_Foundation()
 	}
 }
 
-/*把选出的点坐标系转换为B最小框左上角的坐标系，方便绘制*/
-void Trans_Foundation(struct Point *p)
-{
-	int i;
-
-	for(i=0;i<POINT_COUNT;i++)
-	{
-		p[i].x-=topbound;
-		p[i].y-=leftbound;
-	}
-}
-
 /*把坐标系转换为Bmp左上角的坐标系，方便绘制*/
 void Trans_Back_Foundation(struct Point *p)
 {
@@ -491,14 +450,15 @@ int Save_Image(char savename[],int choice)
 	FILE *dst;
 	unsigned char temp;
 	int x,y;
-	float current;
+	long current;
+	errno_t err;
 
-	if((dst=fopen(savename,"wb+"))==NULL)
+	if(err=fopen_s(&dst,savename,"wb+")!=0)
 	{
-		printf("file cannot open\n");
-		return 0;
-	}
-
+        printf("can't open the file!\n");
+        return 1;
+    }
+	
 	fseek(dst,0,SEEK_SET);
 	for(x=0;x<54;x++)//写bmp信息头
 	{
@@ -659,64 +619,6 @@ int Save_Image(char savename[],int choice)
 	
  }
 
-
-
-/*写特征点进txt*/
-int Write_Points_2_Txt(char txtname[])
-{
-	int count=0,length,x;
-	int randx,randy;
-	FILE *source;
-	Point currentPt;
-	vector<Point> pointsarray;
-	int tempheight=downbound-topbound;
-	int tempwidth=rightbound-leftbound;
-	
-	if((source=fopen(txtname,"wb"))==NULL)
-    {
-        printf("can't open the source file!\n");
-        return 0;
-    }
-	srand((unsigned)time(NULL)); //产生随机种子	
-	while(count<30)
-	{
-		randx=rand()%tempheight+topbound;//随机点的范围在最小框内
-		randy=rand()%tempwidth+leftbound;
-		if(compare_data[randx*scanline+randy]==128)//特征点是灰色的
-		{
-			currentPt.x=randx;
-			currentPt.y=randy;
-			pointsarray.push_back(currentPt);
-			count++;
-		}
-	}
-	while(count<30)
-	{
-		randx=rand()%tempheight+topbound;//随机点的范围在最小框内
-		randy=rand()%tempwidth+leftbound;
-		if(compare_data[randx*scanline+randy]==64)//特征点是灰色的
-		{
-			currentPt.x=randx;
-			currentPt.y=randy;
-			pointsarray.push_back(currentPt);
-			count++;
-		}
-	}
-
-	length=pointsarray.size();
-	for(x=0;x<length/2;x++)//处于一半的点有危险
-	{
-		fprintf(source,"%d,%d,%d,",pointsarray[x].x,pointsarray[x].y,-1);
-	}
-	for(x=length/2;x<length;x++)
-	{
-		fprintf(source,"%d,%d,%d,",pointsarray[x].x,pointsarray[x].y,1);
-	}
-	pointsarray.clear();
-	fclose(source);
-	return 1;
-}
-
 inline void _draw_circle_8(int xc,int yc,int x,int y,int is_empty_choice,int choice)
 {
 	if(is_empty_choice==0)
@@ -761,7 +663,7 @@ inline void _draw_circle_8(int xc,int yc,int x,int y,int is_empty_choice,int cho
 }
 
 /*画最优点为圆心，到边缘最短距离为半径的圆*/
-void Draw_Dot_Circle(float radius,int cicle_center_x,int cicle_center_y,int choice)//Bresenham法画圆
+void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice)//Bresenham法画圆
 {
 	int x=0,y=radius,yi,d;
 	d=3-2*radius;

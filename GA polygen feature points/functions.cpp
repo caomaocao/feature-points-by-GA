@@ -2,30 +2,31 @@
 
 int main(void)
 {
-	char originfile[255]="291";//源图像文件名
+	char originfile[255]="290";//源图像文件名
 	char filename[255];//源图像文件
 	
-	/*字符串连接*/
-	strcpy(filename,originfile);
-	strcat(filename,bmp);
-	Str_process(originfile);
-	
 	Point g[POINT_COUNT]; //序列
-	int i,j,max_iterator=20;//最大迭代次数
+	int i,max_iterator=20;//最大迭代次数
 	int crrnt_iterate=1;     //当前迭代次数
 	float adapt_value[POINT_COUNT],adapt_value_copy[POINT_COUNT]; //当前个体的适配值
 	bool is_broaden_mutation;   //是否变异
 	int bound_points_count;//边缘点数量，包括中间亮斑的边缘数量                                                                                                               
 	int center_dota_count=0;//获得的特征点个数
 	int max_frequency_number=0;//最大权值的位置
+	int radius,cicle_center_x=0,cicle_center_y=0;//局部最大圆坐标与半径
+
+	/*字符串连接*/
+	strcpy_s(filename,originfile);
+	strcat_s(filename,bmp);
+	Str_process(originfile);
 
 	/*图像预处理*/
 	Load_File(filename);//读图像
 	Ostu_Process();//大津法二值化图像
 	Carculate_Pic();//计算最小框
 
-	/*正向点*/
-	Draw_Bound_Pic();
+/*------------------------------------------------------------------------------------正向点------------------------------------------------------------------------------------*/
+	Draw_Bound_Pic();//画最小包围框
 	memcpy(bound_full_data,raw_data,500000);//复制
 	In_Clean_Black(pos_inclean_name,0);
 
@@ -36,13 +37,9 @@ int main(void)
 		Trans_2_Foundation();//随机选出的点和边缘点坐标系转移到 最小框左上角坐标系
 
 		for(i=0;i<POINT_COUNT;i++)//初始化适应度
-		{
 			adapt_value[i]=0;
-		}
-		for(i=0;i<POINT_COUNT;i++)  //产生第一代种群 以及得到当前种群的适配值	
-		{        	
+		for(i=0;i<POINT_COUNT;i++)  //产生第一代种群 以及得到当前种群的适配值	   	
 			adapt_value[i]=Build_Gnenration(&g[i],i);
-		}
 		somepoints.clear();//清空初始随机选择的点向量
 		
 		crrnt_iterate=1;
@@ -57,7 +54,6 @@ int main(void)
 		Trans_Back_Foundation(g);//特征点返回原图坐标系
 		Trans_Boundpoints_2_Foundation();//边缘点返回原图坐标系
 		
-		adapt_value_copy[POINT_COUNT];
 		memcpy(adapt_value_copy,adapt_value,POINT_COUNT*sizeof(float));
 		Float_qsort(adapt_value_copy,0,sizeof(adapt_value_copy)/sizeof(float)-1);//快排
 		max_frequency_number=0;
@@ -68,9 +64,9 @@ int main(void)
 				break;
 			}			
 		
-		float radius=adapt_value[max_frequency_number];
-		int cicle_center_x=g[max_frequency_number].x;
-		int cicle_center_y=g[max_frequency_number].y;
+		radius=(int)adapt_value[max_frequency_number];
+		cicle_center_x=g[max_frequency_number].x;
+		cicle_center_y=g[max_frequency_number].y;
 
 		/*最小半径圆的圆心和半径*/
 		if((bound_full_data[cicle_center_x*scanline+cicle_center_y]==255)&&(cicle_center_x!=topbound)&&(cicle_center_x!=downbound)&&(cicle_center_y!=rightbound)&&(cicle_center_y!=leftbound))
@@ -86,7 +82,7 @@ int main(void)
 
 
 
-	/*找反向点*/
+	/*------------------------------------------------------------------------------------反向点------------------------------------------------------------------------------------*/
 	center_dota_count=0;//特征点数量清0
 	Draw_Bound_Pic();
 	In_Clean_Black(neg_inclean_name,1);
@@ -125,9 +121,9 @@ int main(void)
 			}			
 
 		/*最小半径圆的圆心和半径*/
-		float radius=adapt_value[max_frequency_number];
-		int cicle_center_x=g[max_frequency_number].x;
-		int cicle_center_y=g[max_frequency_number].y;
+		radius=(int)adapt_value[max_frequency_number];
+		cicle_center_x=g[max_frequency_number].x;
+		cicle_center_y=g[max_frequency_number].y;
 		if((bound_full_data[cicle_center_x*scanline+cicle_center_y]==0))
 		{
 			Draw_Dot_Circle(radius,cicle_center_x,cicle_center_y,1);//画圆边缘和圆心

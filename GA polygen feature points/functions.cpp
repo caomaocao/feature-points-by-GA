@@ -2,7 +2,7 @@
 
 int main(void)
 {
-	char originfile[255]="290";//源图像文件名
+	char originfile[255]="442";//源图像文件名
 	char filename[255];//源图像文件
 	
 	Point g[POINT_COUNT]; //序列
@@ -14,6 +14,8 @@ int main(void)
 	int center_dota_count=0;//获得的特征点个数
 	int max_frequency_number=0;//最大权值的位置
 	int radius,cicle_center_x=0,cicle_center_y=0;//局部最大圆坐标与半径
+	int dot_color_level=GRAY_SCALES/POS_FEATURE_COUNTS,present_dot_color=0;
+
 
 	/*字符串连接*/
 	strcpy_s(filename,originfile);
@@ -67,20 +69,24 @@ int main(void)
 		radius=(int)adapt_value[max_frequency_number];
 		cicle_center_x=g[max_frequency_number].x;
 		cicle_center_y=g[max_frequency_number].y;
+		
+		if(center_dota_count==0)
+			present_dot_color=254;
+		else
+			present_dot_color=GRAY_SCALES-center_dota_count*dot_color_level;
 
 		/*最小半径圆的圆心和半径*/
 		if((bound_full_data[cicle_center_x*scanline+cicle_center_y]==255)&&(cicle_center_x!=topbound)&&(cicle_center_x!=downbound)&&(cicle_center_y!=rightbound)&&(cicle_center_y!=leftbound))
 		{
-			Draw_Dot_Circle(radius,cicle_center_x,cicle_center_y,0);//画圆边缘和圆心
+			Draw_Dot_Circle(radius,cicle_center_x,cicle_center_y,0,present_dot_color);//画圆边缘和圆心
 			Save_Image(pos_compare_data_name,0);
 			Save_Image(pos_bound_full_data_name,1);
 		}
 
 		boundpoints.clear();//清除现阶段边缘点	
 		center_dota_count++;//特征点数量增加
+		
 	}
-
-
 
 	/*------------------------------------------------------------------------------------反向点------------------------------------------------------------------------------------*/
 	center_dota_count=0;//特征点数量清0
@@ -120,13 +126,18 @@ int main(void)
 				break;
 			}			
 
+		if(center_dota_count==0)
+			present_dot_color=254;
+		else
+			present_dot_color=GRAY_SCALES-center_dota_count*dot_color_level;
+
 		/*最小半径圆的圆心和半径*/
 		radius=(int)adapt_value[max_frequency_number];
 		cicle_center_x=g[max_frequency_number].x;
 		cicle_center_y=g[max_frequency_number].y;
 		if((bound_full_data[cicle_center_x*scanline+cicle_center_y]==0))
 		{
-			Draw_Dot_Circle(radius,cicle_center_x,cicle_center_y,1);//画圆边缘和圆心
+			Draw_Dot_Circle(radius,cicle_center_x,cicle_center_y,1,present_dot_color);//画圆边缘和圆心
 			Save_Image(neg_compare_data_name,0);
 			Save_Image(neg_bound_full_data_name,1);
 		}

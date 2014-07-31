@@ -11,11 +11,12 @@
 #define SAMPLE_HEIGHT_BIT_COUNT 10//二进制存 高
 #define	SAMPLE_WIDTH_BIT_COUNT 10//二进制存 宽
 #define SAMPLE_LENGTH 10 //支持最宽为1024或者最长为1024的图片 
-#define POS_FEATURE_COUNTS 15//正向特征点数量
-#define NEG_FEATURE_COUNTS 5//反向特征点数量
+#define POS_FEATURE_COUNTS 4//正向特征点数量
+#define NEG_FEATURE_COUNTS 4//反向特征点数量
 #define POINT_COUNT 30	//种群中个体个数；随机点个数
 #define BIG_POINT_COUNT 20   //达到点数
 #define MUTATION_PERCENT 0.2//变异率
+#define GRAY_SCALES 256
 
 using namespace std;
 
@@ -105,7 +106,7 @@ float Get_Nearest_Distance(struct Point p);
 
 void Trans_Boundpoints_2_Foundation();
 
-void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice);
+void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice,int center_color);
 
 void Float_qsort(float s[],int l,int r);
 
@@ -663,7 +664,7 @@ inline void _draw_circle_8(int xc,int yc,int x,int y,int is_empty_choice,int cho
 }
 
 /*画最优点为圆心，到边缘最短距离为半径的圆*/
-void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice)//Bresenham法画圆
+void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice,int center_color)//Bresenham法画圆
 {
 	int x=0,y=radius,yi,d;
 	d=3-2*radius;
@@ -707,7 +708,7 @@ void Draw_Dot_Circle(int radius,int cicle_center_x,int cicle_center_y,int choice
 		}
 		x++;
 	}
-	compare_data[cicle_center_x*scanline+cicle_center_y]=128;//圆心灰度值为128
+	compare_data[cicle_center_x*scanline+cicle_center_y]=center_color;//圆心灰度值阶梯状下滑
 }
 
 /*快速排序*/
